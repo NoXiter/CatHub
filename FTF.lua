@@ -49,6 +49,12 @@ local CreditTotalText_3 = Instance.new("TextLabel")
 local PageTitleText_3 = Instance.new("TextLabel")
 local ViewportFrame = Instance.new("ViewportFrame")
 
+game:GetService("StarterGui"):SetCore("SendNotification", { 
+Title = "CatHub Hitbox";
+Text = "tbhnoxiter#0000";
+Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"})
+Duration = 6; 
+
 FTFHAX.Name = "FTFHAX"
 FTFHAX.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
