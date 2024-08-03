@@ -2,7 +2,7 @@ _G.HeadSize = 8
 _G.Disabled = true
 
 game:GetService("StarterGui"):SetCore("SendNotification", { 
-Title = "CatHub Fly";
+Title = "CatHub Hitbox";
 Text = "tbhnoxiter#0000";
 Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"})
 Duration = 6; 
