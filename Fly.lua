@@ -56,7 +56,7 @@ TextLabel.BackgroundColor3 = Color3.fromRGB(242, 60, 255)
 TextLabel.Position = UDim2.new(0.469327301, 0, 0, 0)
 TextLabel.Size = UDim2.new(0, 100, 0, 28)
 TextLabel.Font = Enum.Font.SourceSans
-TextLabel.Text = "Fly GUI V3"
+TextLabel.Text = "CatHub Fly"
 TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.TextScaled = true
 TextLabel.TextSize = 14.000
@@ -414,7 +414,7 @@ end
 end)
 mine.MouseButton1Down:connect(function()
 if speeds == 1 then
-speed.Text = 'cannot be less than 1'
+speed.Text = 'não pode ser menor que 1'
 wait(1)
 speed.Text = speeds
 else
