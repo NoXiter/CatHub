@@ -1,4 +1,4 @@
-_G.HeadSize = 8
+_G.HeadSize = 10
 _G.Disabled = true
 
 game:GetService("StarterGui"):SetCore("SendNotification", { 
