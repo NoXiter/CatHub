@@ -1,5 +1,5 @@
 game:GetService("StarterGui"):SetCore("SendNotification", { 
-Title = "CatHub Hitbox";
+Title = "CatHub Ant-Lag";
 Text = "tbhnoxiter#0000";
 Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"})
 Duration = 6;
