@@ -138,7 +138,7 @@ nowe = false
 game:GetService("StarterGui"):SetCore("SendNotification", { 
 Title = "CatHub Fly";
 Text = "tbhnoxiter#0000";
-Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"})
+Icon = "rbxthumb://type=Asset&id=18782555285&w=150&h=150"})
 Duration = 6; 
 
 Frame.Active = true -- main = gui
