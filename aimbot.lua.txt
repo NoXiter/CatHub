@@ -1,0 +1,268 @@
+-- // SERVIÇOS
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local players = game:GetService("Players")
+local runService = game:GetService("RunService")
+local userInput = game:GetService("UserInputService")
+
+-- // VARIÁVEIS
+local aimbotEnabled = false
+local espEnabled = false
+local teamCheckEnabled = false
+local guiVisible = true
+local fovRadius = 100
+local guiName = "ModernAimbotUI"
+local espObjects = {}
+
+-- // FOV CIRCLE
+local circle = Drawing.new("Circle")
+circle.Color = Color3.fromRGB(255, 255, 255)
+circle.Thickness = 1
+circle.Filled = false
+circle.Radius = fovRadius
+circle.Visible = true
+circle.Position = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)
+
+-- // NOTIFICAÇÃO
+local function showNotification()
+    local notification = Instance.new("ScreenGui")
+    notification.Name = "Notification"
+    notification.Parent = player.PlayerGui
+
+    local frame = Instance.new("Frame", notification)
+    frame.Size = UDim2.new(0, 250, 0, 50)
+    frame.Position = UDim2.new(1, -260, 1, -60)
+    frame.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+    frame.BorderSizePixel = 0
+    frame.AnchorPoint = Vector2.new(0,0)
+
+    local text = Instance.new("TextLabel", frame)
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.BackgroundTransparency = 1
+    text.Text = "✅ Script Loaded!"
+    text.TextColor3 = Color3.new(1, 1, 1)
+    text.TextScaled = true
+    text.Font = Enum.Font.SourceSansBold
+
+    task.delay(3, function()
+        notification:Destroy()
+    end)
+end
+
+-- // ESP
+local function createESP(p)
+    local name = Drawing.new("Text")
+    name.Size = 14
+    name.Center = true
+    name.Outline = true
+    name.Color = Color3.fromRGB(0, 255, 0)
+
+    local box = Drawing.new("Square")
+    box.Thickness = 1
+    box.Color = Color3.fromRGB(0, 255, 0)
+    box.Filled = false
+
+    local tracer = Drawing.new("Line")
+    tracer.Thickness = 1
+    tracer.Color = Color3.fromRGB(0, 255, 0)
+
+    espObjects[p] = {name = name, box = box, tracer = tracer}
+end
+
+local function removeESP(p)
+    if espObjects[p] then
+        for _, obj in pairs(espObjects[p]) do
+            obj:Remove()
+        end
+        espObjects[p] = nil
+    end
+end
+
+players.PlayerRemoving:Connect(removeESP)
+
+-- // VISIBILIDADE
+local function isVisible(part)
+    if not part then return false end
+    local origin = camera.CFrame.Position
+    local direction = (part.Position - origin)
+    local rayParams = RaycastParams.new()
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+    rayParams.FilterDescendantsInstances = {player.Character or workspace}
+    local result = workspace:Raycast(origin, direction, rayParams)
+    if result then
+        return part:IsDescendantOf(result.Instance.Parent) or result.Instance:IsDescendantOf(part.Parent)
+    else
+        return true
+    end
+end
+
+-- // Aimbot Target
+local function getClosestPlayer()
+    local closest = nil
+    local shortest = fovRadius
+
+    for _, p in pairs(players:GetPlayers()) do
+        if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+            if teamCheckEnabled and p.Team == player.Team then continue end
+            local head = p.Character.Head
+            local pos, onScreen = camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
+                if dist < shortest and isVisible(head) then
+                    shortest = dist
+                    closest = p
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+-- // GUI
+local function createUI()
+    local gui = Instance.new("ScreenGui")
+    gui.Name = guiName
+    gui.Parent = player.PlayerGui
+    gui.ResetOnSpawn = false
+
+    local main = Instance.new("Frame", gui)
+    main.Size = UDim2.new(0, 250, 0, 180)
+    main.Position = UDim2.new(0, 20, 0, 100)
+    main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    main.BorderSizePixel = 0
+    main.Visible = guiVisible
+    main.ClipsDescendants = true
+    main.BackgroundTransparency = 0
+    main.AnchorPoint = Vector2.new(0, 0)
+    main.BorderSizePixel = 0
+    main.BackgroundTransparency = 0
+    main.BorderMode = Enum.BorderMode.Outline
+    main.AutomaticSize = Enum.AutomaticSize.None
+    main:FindFirstAncestorWhichIsA("GuiObject")
+
+    local title = Instance.new("TextLabel", main)
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    title.Text = "⚙️ Aimbot & ESP"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.TextScaled = true
+    title.Font = Enum.Font.GothamBold
+
+    local buttonNames = {"Aimbot", "ESP", "Team Check"}
+    local toggles = {false, false, false}
+    local buttons = {}
+
+    for i, name in ipairs(buttonNames) do
+        local btn = Instance.new("TextButton", main)
+        btn.Size = UDim2.new(0.9, 0, 0, 30)
+        btn.Position = UDim2.new(0.05, 0, 0, 35 + (i-1)*40)
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.Text = name .. ": OFF"
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.TextScaled = true
+        btn.Font = Enum.Font.GothamBold
+
+        buttons[name] = btn
+
+        btn.MouseButton1Click:Connect(function()
+            toggles[i] = not toggles[i]
+            btn.Text = name .. (toggles[i] and ": ON ✅" or ": OFF")
+            btn.BackgroundColor3 = toggles[i] and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 50)
+
+            if name == "Aimbot" then
+                aimbotEnabled = toggles[i]
+            elseif name == "ESP" then
+                espEnabled = toggles[i]
+            elseif name == "Team Check" then
+                teamCheckEnabled = toggles[i]
+            end
+        end)
+    end
+
+    -- Abrir/Fechar Botão
+    local toggleButton = Instance.new("TextButton", gui)
+    toggleButton.Size = UDim2.new(0, 100, 0, 30)
+    toggleButton.Position = UDim2.new(0, 20, 0, 300)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    toggleButton.Text = "Hide UI"
+    toggleButton.TextColor3 = Color3.new(1,1,1)
+    toggleButton.TextScaled = true
+    toggleButton.Font = Enum.Font.GothamBold
+
+    toggleButton.MouseButton1Click:Connect(function()
+        guiVisible = not guiVisible
+        main.Visible = guiVisible
+        toggleButton.Text = guiVisible and "Hide UI" or "Show UI"
+    end)
+end
+
+createUI()
+showNotification()
+
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    if not player:WaitForChild("PlayerGui"):FindFirstChild(guiName) then
+        createUI()
+    end
+end)
+
+-- // LOOP
+runService.RenderStepped:Connect(function()
+    circle.Position = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)
+
+    if aimbotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
+        end
+    end
+
+    for _, p in pairs(players:GetPlayers()) do
+        if p ~= player then
+            if not espObjects[p] then
+                createESP(p)
+            end
+
+            local drawings = espObjects[p]
+            local char = p.Character
+
+            if espEnabled and char and char:FindFirstChild("Head") and char:FindFirstChild("HumanoidRootPart") then
+                if teamCheckEnabled and p.Team == player.Team then
+                    drawings.name.Visible = false
+                    drawings.box.Visible = false
+                    drawings.tracer.Visible = false
+                    continue
+                end
+
+                local headPos, onScreen1 = camera:WorldToViewportPoint(char.Head.Position)
+                local rootPos, onScreen2 = camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+
+                if onScreen1 and onScreen2 then
+                    local height = (headPos - rootPos).Magnitude * 2
+                    local width = height / 2
+
+                    drawings.box.Size = Vector2.new(width, height)
+                    drawings.box.Position = Vector2.new(rootPos.X - width/2, rootPos.Y - height/2)
+                    drawings.box.Visible = true
+
+                    drawings.name.Text = p.Name
+                    drawings.name.Position = Vector2.new(headPos.X, headPos.Y - 20)
+                    drawings.name.Visible = true
+
+                    drawings.tracer.From = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
+                    drawings.tracer.To = Vector2.new(rootPos.X, rootPos.Y)
+                    drawings.tracer.Visible = true
+                else
+                    drawings.name.Visible = false
+                    drawings.box.Visible = false
+                    drawings.tracer.Visible = false
+                end
+            else
+                drawings.name.Visible = false
+                drawings.box.Visible = false
+                drawings.tracer.Visible = false
+            end
+        end
+    end
+end)
